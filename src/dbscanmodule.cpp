@@ -1,8 +1,13 @@
+#define DBSCAN_VERSION "0.0.9"
+
 #include "Python.h"
 #include "numpy/arrayobject.h"
 #include "dbscan/capi.h"
 
-#define STR(x) #x
+// load "dbscan.py" to be used as postprocessing code run after the "DBSCAN"
+// function is loaded
+extern const char* DBSCAN_PYTHON_POSTPROCESSING_CODE;
+
 
 static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
 {
@@ -40,13 +45,13 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
 
     if (dim < DBSCAN_MIN_DIMS)
     {
-        PyErr_SetString(PyExc_ValueError, "DBSCAN: invalid input data dimensionality (has to >=" STR(DBSCAN_MIN_DIMS) ")");
+        PyErr_SetString(PyExc_ValueError, "DBSCAN: invalid input data dimensionality (has to >=" Py_STRINGIFY(DBSCAN_MIN_DIMS) ")");
         return NULL;
     }
 
     if (dim > DBSCAN_MAX_DIMS)
     {
-        PyErr_SetString(PyExc_ValueError, "DBSCAN: dimension >" STR(DBSCAN_MAX_DIMS) " is not supported");
+        PyErr_SetString(PyExc_ValueError, "DBSCAN: dimension >" Py_STRINGIFY(DBSCAN_MAX_DIMS) " is not supported");
         return NULL;
     }
 
@@ -68,9 +73,7 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
         (int*)PyArray_DATA(labels)
     );
 
-    PyObject* ret = PyTuple_Pack(2, labels, core_samples);
-    Py_IncRef(ret);
-    return ret;
+    return PyTuple_Pack(2, labels, core_samples);
 }
 
 PyDoc_STRVAR(doc_DBSCAN,
@@ -105,16 +108,12 @@ static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-typedef struct {
-    PyObject *DBSCAN;
-} dbscanModuleState;
-
 static struct PyModuleDef dbscanModule =
 {
     PyModuleDef_HEAD_INIT,
     "dbscan",
     "",
-    sizeof(dbscanModuleState),
+    0,
     methods
 };
 
@@ -122,5 +121,22 @@ PyMODINIT_FUNC
 PyInit_dbscan (void)
 {
     import_array();
-    return PyModule_Create(&dbscanModule);
+    PyObject *module = PyModule_Create(&dbscanModule);
+    PyModule_AddStringConstant(module, "__version__", DBSCAN_VERSION);
+
+    PyObject* globs = PyModule_GetDict(module);
+
+    PyObject* code = Py_CompileString(DBSCAN_PYTHON_POSTPROCESSING_CODE, "<dbscan>", Py_file_input);
+    if (code == NULL)
+        return NULL;
+
+    // ret is None and can be ignored
+    PyObject* ret = PyEval_EvalCode(code, globs, globs);
+    if (ret == NULL)
+        return NULL;
+
+    Py_DecRef(ret);
+    Py_DecRef(code);
+
+    return module;
 }
