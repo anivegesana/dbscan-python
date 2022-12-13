@@ -59,6 +59,10 @@
 
 #include "work_stealing_job.h"
 
+// use a backport for C++17 plebs
+#include "../cxxbackports/atomic_wait"
+
+
 namespace parlay {
 
 // Deque from Arora, Blumofe, and Plaxton (SPAA, 1998).
@@ -157,6 +161,7 @@ struct scheduler {
       : num_threads(init_num_workers()),
         num_deques(2 * num_threads),
         deques(num_deques),
+        deque_flag(),
         attempts(num_deques),
         spawned_threads(),
         finished_flag(false) {
@@ -177,6 +182,8 @@ struct scheduler {
 
   ~scheduler() {
     finished_flag.store(true, std::memory_order_relaxed);
+    deque_flag.store(false);
+    std::experimental::atomic_notify_all(&deque_flag);
     for (unsigned int i = 1; i < num_threads; i++) {
       spawned_threads[i - 1].join();
     }
@@ -186,6 +193,8 @@ struct scheduler {
   void spawn(Job* job) {
     int id = worker_id();
     deques[id].push_bottom(job);
+    deque_flag.store(false);
+    std::experimental::atomic_notify_one(&deque_flag);
   }
 
   // Wait for condition: finished().
@@ -203,7 +212,11 @@ struct scheduler {
   }
 
   // All scheduler threads quit after this is called.
-  void finish() { finished_flag.store(true, std::memory_order_relaxed); }
+  void finish() {
+    finished_flag.store(true, std::memory_order_relaxed);
+    deque_flag.store(false);
+    std::experimental::atomic_notify_all(&deque_flag);
+  }
 
   // Pop from local stack.
   Job* try_pop() {
@@ -244,6 +257,7 @@ struct scheduler {
 
   int num_deques;
   std::vector<Deque<Job>> deques;
+  std::atomic<bool> deque_flag;
   std::vector<attempt> attempts;
   std::vector<std::thread> spawned_threads;
   std::atomic<int> finished_flag;
@@ -272,15 +286,26 @@ struct scheduler {
     Job* job = try_pop();
     if (job) return job;
     size_t id = worker_id();
+    deque_flag.store(false);
     while (true) {
+      // If haven't found anything, take a breather.
+      std::experimental::atomic_wait(&deque_flag, true);
+
       // By coupon collector's problem, this should touch all.
       for (int i = 0; i <= num_deques * 100; i++) {
-        if (finished()) return nullptr;
+        if (finished()) {
+          deque_flag.store(false);
+          std::experimental::atomic_notify_all(&deque_flag);
+          return nullptr;
+        }
         job = try_steal(id);
-        if (job) return job;
+        if (job) {
+          deque_flag.store(false);
+          std::experimental::atomic_notify_one(&deque_flag);
+          return job;
+        }
       }
-      // If haven't found anything, take a breather.
-      std::this_thread::sleep_for(std::chrono::nanoseconds(num_deques * 100));
+      deque_flag.store(true);
     }
   }
 

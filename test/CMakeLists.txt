@@ -43,19 +43,19 @@ project(sourceFiles)
 add_library(sourceFiles INTERFACE)
 target_include_directories(sourceFiles INTERFACE ../src/)
 
-add_executable(grid_test grid_test.cpp)
+add_executable(grid_test grid_test.cpp ../src/cxxbackports.cpp)
 target_link_libraries(grid_test PRIVATE
   sourceFiles
   ${GTest_LIBRARIES})
 add_test(NAME grid_test COMMAND grid_test)
 
-add_executable(dbscan_test dbscan_test.cpp ../src/capi.cpp)
+add_executable(dbscan_test dbscan_test.cpp ../src/capi.cpp ../src/cxxbackports.cpp)
 target_link_libraries(dbscan_test PRIVATE
   sourceFiles
   ${GTest_LIBRARIES})
 add_test(NAME dbscan_test COMMAND dbscan_test)
 
-# add_executable(dbscan_test dbscan_test.cpp)
+# add_executable(dbscan_test dbscan_test.cpp ../src/capi.cpp ../src/cxxbackports.cpp)
 # target_link_libraries(dbscan_test PRIVATE
 #   gridLib
 #   dbscanLib

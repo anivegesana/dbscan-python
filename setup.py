@@ -44,7 +44,7 @@ setuptools.setup(
     package_dir={'dbscan': 'pythonmodule'},
     ext_modules=[Extension(
         "dbscan._dbscan",
-        ["src/dbscanmodule.cpp", "src/capi.cpp"],
+        ["src/dbscanmodule.cpp", "src/capi.cpp", "src/cxxbackports.cpp"],
         language = 'c++',
         extra_compile_args=extra_compile_args,
         include_dirs=[numpy.get_include(), 'include'],
