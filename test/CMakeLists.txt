@@ -49,10 +49,18 @@ target_link_libraries(grid_test PRIVATE
   ${GTest_LIBRARIES})
 add_test(NAME grid_test COMMAND grid_test)
 
-add_executable(dbscan_test dbscan_test.cpp ../src/capi.cpp)
-target_link_libraries(dbscan_test PRIVATE
-  sourceFiles
-  ${GTest_LIBRARIES})
+if(TARGET dbscan_s)
+  add_executable(dbscan_test dbscan_test.cpp)
+  target_link_libraries(dbscan_test PRIVATE
+    sourceFiles
+    dbscan_s
+    ${GTest_LIBRARIES})
+else()
+  add_executable(dbscan_test dbscan_test.cpp ../src/capi.cpp)
+  target_link_libraries(dbscan_test PRIVATE
+    sourceFiles
+    ${GTest_LIBRARIES})
+endif()
 add_test(NAME dbscan_test COMMAND dbscan_test)
 
 # add_executable(dbscan_test dbscan_test.cpp)

@@ -7,5 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(CMAKE_CXX_FLAGS "-std=c++17 -pthread -O3 -fPIC")
 
-add_executable(dbscan main.cpp ../src/capi.cpp)
-target_include_directories(dbscan PRIVATE ../src/)
+if(TARGET dbscan_s)
+  add_executable(dbscan main.cpp) # src/capi.cpp
+  target_include_directories(dbscan PRIVATE ${DBSCAN_INCLUDE_DIR})
+  target_link_libraries(dbscan PUBLIC dbscan_s)
+else()
+  add_executable(dbscan main.cpp ../src/capi.cpp)
+  target_include_directories(dbscan PRIVATE ../include/)
+endif()
