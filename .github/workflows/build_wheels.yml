@@ -37,6 +37,11 @@ jobs:
           name: executable
           path: ./build/executable/dbscan
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: static
+          path: ./build/libdbscan_s.a
+
   generate_matrix:
     name: Generate Matrix
     runs-on: ubuntu-latest

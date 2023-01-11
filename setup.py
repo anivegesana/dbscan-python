@@ -37,6 +37,22 @@ version = setuptools_scm.get_version()
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+# If CMake is available, use it
+sources = ["src/dbscanmodule.cpp"]
+extra_objects = []
+if os.path.exists("build/Makefile"):
+    try:
+        os.system('make -C build dbscan_s')
+    except:
+        print('Tried using static library, but it failed')
+        import traceback
+        traceback.print_exc()
+        sources.append("src/capi.cpp")
+    else:
+        extra_objects.append("build/libdbscan_s.a")
+else:
+    sources.append("src/capi.cpp")
+
 setuptools.setup(
     name="dbscan",
     version=version,
@@ -44,9 +60,10 @@ setuptools.setup(
     package_dir={'dbscan': 'pythonmodule'},
     ext_modules=[Extension(
         "dbscan._dbscan",
-        ["src/dbscanmodule.cpp", "src/capi.cpp"],
+        sources,
         language = 'c++',
         extra_compile_args=extra_compile_args,
+        extra_objects=extra_objects,
         include_dirs=[numpy.get_include(), 'include'],
         depends=depends,
         py_limited_api=True,

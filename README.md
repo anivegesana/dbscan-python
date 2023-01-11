@@ -38,8 +38,7 @@ The `<data-file>` can be any CSV-like point data file, where each line contains 
 There are two ways to install it:
 
 * Install it using PyPI: ``pip3 install --user dbscan`` (you can find the wheels [here](https://pypi.org/project/dbscan/#files))
-* (harder and not recommended) Compile it yourself: First install dependencies ``pip3 install -r requirements.txt`` and ``sudo apt install libpython3-dev``. Run ``python3 setup.py build``, The compilation will take a few minutes, and generate a ``.so`` library containing the ``DBSCAN`` module.
-To create a wheel that is supported universally across many Python versions for your given OS, run ``python setup.py bdist_wheel`` in an environment containing the oldest numpy version available for the version of Python that you are compiling for. For example, for Python 3.8, use numpy 1.17 to compile the wheel. Then, the wheel will work on all Python and numpy versions that are newer that that for your given OS. This is done automatically when installing via pip.
+* (harder and not recommended) Compile it yourself: First, clone this repo. Next, install the toolchain for your OS (``sudo apt install libpython3-dev`` for Ubuntu, Xcode for macos, MSVC compiler for Windows, etc.) To compile and install the library, run ``pip install -e .`` . To create a wheel that is supported universally across many Python versions for your given OS, run ``python setup.py bdist_wheel``. The wheel can only be installed on machines with a later/identical version of the OS, Python, and NumPy.
 
 An example for using the Python module is provided in ``example.py``. If the dependencies above are installed, simply run ``python3 example.py`` from the root directory to reproduce the plots above.
 
