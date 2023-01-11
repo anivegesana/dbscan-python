@@ -58,7 +58,7 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
     PyArrayObject* core_samples = (PyArrayObject*)PyArray_SimpleNew(1, &n, NPY_BOOL);
     PyArrayObject* labels = (PyArrayObject*)PyArray_SimpleNew(1, &n, NPY_INT);
 
-    parlay::internal::start_scheduler();
+    Py_BEGIN_ALLOW_THREADS
 
     DBSCAN(
         dim,
@@ -70,7 +70,7 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
         (int*)PyArray_DATA(labels)
     );
 
-    parlay::internal::stop_scheduler();
+    Py_END_ALLOW_THREADS
 
     return PyTuple_Pack(2, labels, core_samples);
 }
