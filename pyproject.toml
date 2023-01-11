@@ -56,10 +56,13 @@ write_to = "pythonmodule/_version.py"
 build = "cp36-* cp38-macosx_arm64" # pp39-* cp39-win_arm64
 skip = "*-win32 *_i686 *-musllinux_*"
 
+test-requires = ["pytest", "scikit-learn"]
+test-command = "pytest {package}/test"
+
 # We will only build x86_64 when merged into master to save on compilation
 # time.
-# [tool.cibuildwheel.macos]
-# archs = ["x86_64", "arm64"]
+[tool.cibuildwheel.macos]
+archs = ["universal2"]
 
 # We will only build aarch64 when merged into master to save on compilation
 # time.
