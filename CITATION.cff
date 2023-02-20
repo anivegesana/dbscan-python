@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+- family-names: "Wang"
+  given-names: "Yiqiu"
+title: "Theoretically-Efficient and Practical Parallel DBSCAN (Python)"
+version: 0.0.12
+license: MIT
+date-released: 2020-12-22
+repository-code: "https://github.com/wangyiqiu/dbscan-python"
+url: "https://sites.google.com/view/yiqiuwang/dbscan"
+keywords:
+- python
+- machine-learning
+- data-mining
+- clustering
+- parallel-algorithm
+- data-clustering
+- dbscan
+- dbscan-clustering
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Wang"
+    given-names: "Yiqiu"
+  - family-names: "Gu"
+    given-names: "Yan"
+    orcid: "https://orcid.org/0000-0002-4392-4022"
+  - family-names: "Shun"
+    given-names: "Julian"
+  title: "Theoretically-Efficient and Practical Parallel DBSCAN"
+  year: 2020
+  isbn: "9781450367356"
+  publisher: "Association for Computing Machinery"
+  city: "New York"
+  region: "NY"
+  country: "US"
+  doi: "10.1145/3318464.3380582"
+  url: "https://doi.org/10.1145/3318464.3380582"
+  journal: "ACM SIGMOD International Conference on Management of Data (SIGMOD)"
+  keywords:
+  - parallel algorithms
+  - spatial clustering
+  - DBScan
+  location: "Portland, OR, USA"
+  month: 9
+  start: 2555
+  end: 2571
+  pages: 17
