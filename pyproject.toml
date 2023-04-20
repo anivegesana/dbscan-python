@@ -23,6 +23,9 @@ classifiers = [
 
 dynamic = ["version", "dependencies", "requires-python"]
 
+[project.entry-points."numba_extensions"]
+init = "dbscan:_init_numba_extension"
+
 [project.optional-dependencies]
 scikit-learn = [
     "scikit-learn"

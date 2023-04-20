@@ -1,7 +1,6 @@
 #include "Python.h"
 #include "numpy/arrayobject.h"
 #include "dbscan/capi.h"
-#include "dbscan/pbbs/parallel.h"
 
 
 static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
@@ -13,7 +12,7 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
 
     static const char *kwlist[] = {"X", "eps", "min_samples", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|di:DBSCAN", (char**)kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|di:dbscan.DBSCAN", (char**)kwlist,
                                      &Xobj, &eps, &min_samples))
     {
         return NULL;
@@ -58,8 +57,6 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
     PyArrayObject* core_samples = (PyArrayObject*)PyArray_SimpleNew(1, &n, NPY_BOOL);
     PyArrayObject* labels = (PyArrayObject*)PyArray_SimpleNew(1, &n, NPY_INT);
 
-    parlay::internal::start_scheduler();
-
     DBSCAN(
         dim,
         n,
@@ -69,8 +66,6 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
         (bool*)PyArray_DATA(core_samples),
         (int*)PyArray_DATA(labels)
     );
-
-    parlay::internal::stop_scheduler();
 
     return PyTuple_Pack(2, labels, core_samples);
 }
@@ -121,11 +116,26 @@ PyInit__dbscan(void)
 {
     import_array();
     PyObject *module = PyModule_Create(&dbscanModule);
+
+    if (module == NULL)
+    {
+        return NULL;
+    }
+
 #ifdef DBSCAN_VERSION
     PyModule_AddStringConstant(module, "__version__", DBSCAN_VERSION);
 #endif
     PyModule_AddIntMacro(module, DBSCAN_MIN_DIMS);
     PyModule_AddIntMacro(module, DBSCAN_MAX_DIMS);
+    // PyModule_AddIntConstant(module, "_mclib_DBSCAN_ptr", (long)(void*)DBSCAN);
+
+    PyObject *_mclib_DBSCAN_ptr = PyCapsule_New((void *)DBSCAN, "int (int, int, double *, double, int, bool *, int *)", NULL);
+
+    if (PyModule_AddObject(module, "_mclib_DBSCAN_ptr", _mclib_DBSCAN_ptr) < 0) {
+        Py_XDECREF(_mclib_DBSCAN_ptr);
+        Py_DECREF(module);
+        return NULL;
+    }
 
     return module;
 }

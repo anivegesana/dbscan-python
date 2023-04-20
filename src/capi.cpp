@@ -21,6 +21,8 @@ static constexpr void constexpr_for(F&& f)
 }
 
 extern "C" int DBSCAN(intT dim, intT n, floatT* PF, double epsilon, intT minPts, bool* coreFlag, intT* labels) {
+  parlay::internal::start_scheduler();
+
   auto coreFlag2 = newA(intT, n);
   int error = 1; // didn't match number of dimensions
   constexpr_for<DBSCAN_MIN_DIMS, DBSCAN_MAX_DIMS+1, 1>([&](auto i){
@@ -29,6 +31,8 @@ extern "C" int DBSCAN(intT dim, intT n, floatT* PF, double epsilon, intT minPts,
       free(coreFlag2);
     }
   });
+
+  parlay::internal::stop_scheduler();
   return error;
 }
 
