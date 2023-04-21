@@ -7,40 +7,25 @@
 
 This repository hosts fast parallel DBSCAN clustering code for low dimensional Euclidean space. The code automatically uses the available threads on a parallel shared-memory machine to speedup DBSCAN clustering. It stems from a paper presented in SIGMOD'20: [Theoretically Efficient and Practical Parallel DBSCAN](https://dl.acm.org/doi/10.1145/3318464.3380582).
 
-Our software on 1 thread is on par with all serial state-of-the-art DBSCAN packages, and provides additional speedup via multi-threading. Below, we show a simple benchmark comparing our code with the DBSCAN implementation of Sklearn, tested on a 6-core computer using a 2-dimensional data set with 50000 data points. We also show a visualization of the clustering result on a smaller data set.
+Our software on 1 thread is on par with all serial state-of-the-art DBSCAN packages, and provides additional speedup via multi-threading. Below, we show a simple benchmark comparing our code with the DBSCAN implementation of Sklearn, tested on a 6-core computer with 2-way hyperthreading using a 2-dimensional data set with 50000 data points, where both implementation uses all available threads. Our implementation is more than **32x** faster. We also show a visualization of the clustering result on a smaller data set.
 
 Data sets with dimensionality 2 - 20 are supported by default, which can be modified by modifying ``DBSCAN_MIN_DIMS`` and ``DBSCAN_MAX_DIMS`` in the [source code](https://github.com/wangyiqiu/dbscan-python/blob/master/include/dbscan/capi.h).
 
 <p float="left">
-<img src="https://github.com/wangyiqiu/dbscan-python/blob/master/compare.png" alt="timing" width="300"/>
-<img src="https://github.com/wangyiqiu/dbscan-python/blob/master/example.png" alt="example" width="300"/>
+<img src="https://raw.githubusercontent.com/wangyiqiu/dbscan-python/0.0.12-dev/compare.png" alt="timing" width="300"/>
+<img src="https://raw.githubusercontent.com/wangyiqiu/dbscan-python/0.0.12-dev/example.png" alt="example" width="300"/>
 </p>
 
 ## Tutorial
 
-### Option 1: Use the binary executable
-
-Compile and run the program:
-
-```
-mkdir build
-cd build
-cmake ..
-cd executable
-make -j # this will take a while
-./dbscan -eps 0.1 -minpts 10 -o clusters.txt <data-file>
-```
-
-The `<data-file>` can be any CSV-like point data file, where each line contains a data point -- see an example [here](https://github.com/wangyiqiu/hdbscan/blob/main/example-data.csv). The data file can be either with or without header. The cluster output `clusters.txt` will contain a cluster ID on each line (other than the first-line header), giving a cluster assignment in the same ordering as the input file. A noise point will have a cluster ID of `-1`.
-
-### Option 2: Use the Python binding
+### Option 1: Use the Python binding
 
 There are two ways to install it:
 
 * Install it using PyPI: ``pip3 install --user dbscan`` (you can find the wheels [here](https://pypi.org/project/dbscan/#files))
 * (harder and not recommended) Compile it yourself: First, clone this repo. Next, install the toolchain for your OS (``sudo apt install libpython3-dev`` for Ubuntu, Xcode for macos, MSVC compiler for Windows, etc.) To compile and install the library, run ``pip install -e .`` . To create a wheel that is supported universally across many Python versions for your given OS, run ``python setup.py bdist_wheel``. The wheel can only be installed on machines with a later/identical version of the OS, Python, and NumPy.
 
-An example for using the Python module is provided in ``example.py``. If the dependencies above are installed, simply run ``python3 example.py`` from the root directory to reproduce the plots above.
+An example for using the Python module is provided in ``example.py``. It generates the clustering example above.
 
 #### Python API
 
@@ -77,15 +62,16 @@ X = StandardScaler().fit_transform(X)
 # #############################################################################
 # Compute DBSCAN
 
-from dbscan import sklDBSCAN as DBSCAN
-db = DBSCAN(eps=0.3, min_samples=10).fit(X)
-core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-core_samples_mask[db.core_sample_indices_] = True
-labels = db.labels_
+# direct call of the C API:
+from dbscan import DBSCAN
+labels, core_samples_mask = DBSCAN(X, eps=0.3, min_samples=10)
 
-# OR direct call of the C API:
-# from dbscan import DBSCAN
-# labels, core_samples_mask = DBSCAN(X, eps=0.3, min_samples=10)
+# OR calling our sklearn API:
+# from dbscan import sklDBSCAN as DBSCAN
+# db = DBSCAN(eps=0.3, min_samples=10).fit(X)
+# core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+# core_samples_mask[db.core_sample_indices_] = True
+# labels = db.labels_
 
 # #############################################################################
 # Plot result
@@ -115,6 +101,21 @@ for k, col in zip(unique_labels, colors):
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
 ```
+
+### Option 2: Use the binary executable
+
+Compile and run the program:
+
+```
+mkdir build
+cd build
+cmake ..
+cd executable
+make -j # this will take a while
+./dbscan -eps 0.1 -minpts 10 -o clusters.txt <data-file>
+```
+
+The `<data-file>` can be any CSV-like point data file, where each line contains a data point -- see an example [here](https://github.com/wangyiqiu/hdbscan/blob/main/example-data.csv). The data file can be either with or without header. The cluster output `clusters.txt` will contain a cluster ID on each line (other than the first-line header), giving a cluster assignment in the same ordering as the input file. A noise point will have a cluster ID of `-1`.
 
 ### Option 3: Include directly in your own C++ program
 
