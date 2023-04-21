@@ -13,6 +13,29 @@ on: [push, pull_request]
 #       - published
 
 jobs:
+  build_and_test:
+    name: Build executable and run test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make -j
+
+      - name: Test
+        run: |
+          cd build
+          ctest --no-tests=error --output-on-failure
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: executable
+          path: ./build/executable/dbscan
 
   generate_matrix:
     name: Generate Matrix
@@ -60,36 +83,16 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
         env:
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: ${{ fromJson(needs.generate_matrix.outputs.CIBW_ARCHS_LINUX) }}
-
-      - name: Compile using CMake for Linux
-        if: runner.os == 'Linux'
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DDBSCAN_TEST=ON
-          make -j
-
-      - name: CTest for Linux
-        if: runner.os == 'Linux'
-        run: |
-          cd build
-          ctest --no-tests=error --output-on-failure
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_EXTRAS: "py36"
+          CIBW_TEST_COMMAND: "pytest {package}/test"
 
       - uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: ./wheelhouse/*.whl
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: executable ${{ runner.os }}
-          path: ./build/executable/dbscan
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: static ${{ runner.os }}
-          path: ./build/libdbscan_s.a
 
   build_sdist:
     name: Build source distribution

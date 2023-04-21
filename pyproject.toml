@@ -63,6 +63,7 @@ test-command = "pytest {package}/test"
 # time.
 [tool.cibuildwheel.macos]
 archs = ["universal2"]
+archs = ["x86_64", "arm64"]
 
 # We will only build aarch64 when merged into master to save on compilation
 # time.
