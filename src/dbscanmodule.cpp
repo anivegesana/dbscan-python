@@ -72,7 +72,10 @@ static PyObject* DBSCAN_py(PyObject* self, PyObject* args, PyObject *kwargs)
 
     parlay::internal::stop_scheduler();
 
-    return PyTuple_Pack(2, labels, core_samples);
+    PyObject* result = PyTuple_Pack(2, labels, core_samples);
+    Py_DecRef((PyObject*) labels);
+    Py_DecRef((PyObject*) core_samples);
+    return result;
 }
 
 PyDoc_STRVAR(doc_DBSCAN,
